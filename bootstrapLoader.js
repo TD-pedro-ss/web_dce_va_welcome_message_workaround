@@ -1,10 +1,11 @@
 const defaultOptions = {
+	welcomeMessage : "welcome",
 	withWelcomeScreen: false,
-	openAfterTimeout: undefined
+	openAfterTimeout: undefined //value in miliseconds
   };
   
   function bootstrapLoader(webchat, options = defaultOptions) {
-	const { withWelcomeScreen, openAfterTimeout } = options;
+	const { welcomeMessage, withWelcomeScreen, openAfterTimeout } = options;
   
 	if (!webchat.isLiveChat) {
 	  return;
@@ -48,7 +49,7 @@ const defaultOptions = {
   
 	  setTimeout(() => {
 		webchat.selfHostedApp.addUserMessage({
-		  data: "welcome",
+		  data: welcomeMessage,
 		  type: "postback"
 		});
 	  }, 50);
