@@ -1,11 +1,21 @@
-const defaultOptions = {
-	welcomeMessage : "welcome",
+function isMobile() {
+	return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+	  navigator.userAgent
+	);
+  }
+  
+  const defaultOptions = {
 	withWelcomeScreen: false,
-	openAfterTimeout: undefined //value in miliseconds
+	welcomeMessage: "GetStarted", //First message sent to Studio when the user start the chat
+	openAfterTimeout: isMobile(true) ? undefined : 3000, //Value in miliseconds. Remove this line if you don't want to a start chat when user clicks in the chat bubble
+	withLocation: false
   };
   
   function bootstrapLoader(webchat, options = defaultOptions) {
-	const { welcomeMessage, withWelcomeScreen, openAfterTimeout } = options;
+	const { welcomeMessage, withWelcomeScreen, openAfterTimeout, withLocation } = {
+	  ...defaultOptions,
+	  ...options
+	};
   
 	if (!webchat.isLiveChat) {
 	  return;
@@ -47,58 +57,71 @@ const defaultOptions = {
 	const startProcess = () => {
 	  showLoader();
   
+	  let firstMessage = welcomeMessage;
+
+	  if(withLocation){
+		const l = withLocation
+		? localStorage.getItem("currentLocation")
+		: undefined;
+
+		firstMessage = withLocation
+		? l
+		  ? "Hello from " + l
+		  : "Helloㅤ"
+		: firstMessage;
+
+	  }
+  
 	  setTimeout(() => {
 		webchat.selfHostedApp.addUserMessage({
-		  data: welcomeMessage,
+			data: firstMessage,
 		  type: "postback"
 		});
-	  }, 50);
-	};
-  
-	const isFormValid = () => {
-	  return (
-		webchat.injector.shadowRoot.querySelectorAll('[class*="isError"]')
-		  .length === 0
-	  );
+	  }, 100);
 	};
   
 	const hasClass = (path, cls) => {
-	  return path?.some((p) => p?.className === cls);
+	  return path?.some((p) => p?.className?.startsWith(cls));
 	};
   
-	const startButtonClass = "customStartChatButton_1BlLP";
+	const startButtonClass = "customStartChatButton_";
   
 	const getForm = () => webchat.injector.shadowRoot.querySelector("form");
-  
+
 	const onSubmit = (e) => {
-	  const form = getForm();
-  
-	  if (form) {
-		form.removeEventListener("submit", onSubmit);
-	  }
-  
-	  if (!isFormValid()) {
-		e.preventDefault();
-	  } else {
-		startProcess();
-	  }
-	};
-  
+		const form = getForm();
+	
+		if (form) {
+		  form.removeEventListener("submit", onSubmit);
+		}
+	
+		if (!isFormValid()) {
+		  e.preventDefault();
+		} else {
+		  startProcess();
+		}
+	  };
+
+	  const isFormValid = () => {
+		return (
+		  webchat.injector.shadowRoot.querySelectorAll('[class*="isError"]')
+			.length === 0
+		);
+	  };
+
 	// Add event listeners
-  
 	webchat.injector.addEventListener("click", (e) => {
-	  //if (hasClass(e.path, "triggerButtonContainer_2T9qk")) {
-	  if (hasClass(e.path, "submitButton_181hJ")) {
-		getForm().addEventListener("submit", onSubmit);
-  
-		return;
-	  }
+
+		// When the user clicks on the form button
+		if (hasClass(e.composedPath(), "submitButton_")) {
+			getForm().addEventListener("submit", onSubmit);
+			return;	  
+		}
   
 	  // When the user clicks on the "Start new chat"
-	  if (hasClass(e.path, startButtonClass) && e.isTrusted) {
+	  if (hasClass(e.composedPath(), startButtonClass) && e.isTrusted) {
 		if (!withWelcomeScreen) {
-		  // showLoader();
-		  //setTimeout(startProcess);
+		  setTimeout(startProcess);
 		}
   
 		// const ref = webchat.selfHostedApp.webchatRef.current;
@@ -134,7 +157,30 @@ const defaultOptions = {
 	const getByClass = (className) => querySelector("." + className);
   
 	const getStartButton = () => {
-	  return getByClass(startButtonClass);
+	  return querySelector(`[class^="${startButtonClass}"]`);
+	};
+  
+	const getLocation = () => {
+	  if (!withLocation) {
+		return undefined;
+	  }
+  
+	  const currentLocation = localStorage.getItem("currentLocation");
+  
+	  if (currentLocation) {
+		return Promise.resolve(currentLocation);
+	  }
+  
+	  return fetch("https://ipapi.co/json/")
+		.then((apiResult) => apiResult.json())
+		.then((jsonData) => jsonData.city + " - " + jsonData.country_name)
+		.then((l) => {
+		  localStorage.setItem("currentLocation", l);
+		  return l;
+		})
+		.catch(() => {
+		  return undefined;
+		});
 	};
   
 	const restartSession = async () => {
@@ -193,6 +239,7 @@ const defaultOptions = {
 	  }
   
 	  initialized = true;
+	  await getLocation();
   
 	  // Let's see if the conversation ended from config
 	  const { livechatConversationEnded } = getWebchatConfig();
@@ -201,13 +248,18 @@ const defaultOptions = {
 		showLoader();
 		await restartSession();
   
-		startProcess();
+		if (!withWelcomeScreen) {
+		  startProcess();
+		} else {
+		  hideLoader();
+		}
+  
 		return;
 	  }
   
 	  const lastReadMessageIndex = localStorage.getItem("lastReadMessageIndex");
   
-	  if (lastReadMessageIndex === "null") {
+	  if (!lastReadMessageIndex || lastReadMessageIndex === "null") {
 		if (!withWelcomeScreen) {
 		  // Show the loader and send the payload
 		  // When opening the widget on the first time

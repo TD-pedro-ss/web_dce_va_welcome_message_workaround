@@ -4,11 +4,15 @@ This code allows Talkdesk Web Messenger to initiate a chat conversation once the
 ## How to use it?
 
 ### Embedded the files
-Add the files in the webpage head tag
+1- Upload the following files to your web page server:
+bootstrapLoader.js
+css/loader.css
+
+2- Add the files in the webpage head tag
 ```
 <head>
-	<!-- Other coder -->
-	<link   href="css/loader.css"    rel="stylesheet" />
+
+	<!-- Talkdesk web chat augmentation -->
     <script src="bootstrapLoader.js" text="javascript"></script>
 
 </head>
