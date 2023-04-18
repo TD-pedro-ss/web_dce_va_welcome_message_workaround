@@ -81,8 +81,14 @@ function isMobile() {
 	};
   
 	const hasClass = (path, cls) => {
-	  return path?.some((p) => p?.className?.startsWith(cls));
-	};
+	  return path?.some((p) => {
+	    try {
+	       return p?.className?.startsWith(cls);
+	    } catch (e) {
+	       return false;
+	    }
+	  });
+        };
   
 	const startButtonClass = "customStartChatButton_";
   
@@ -111,12 +117,12 @@ function isMobile() {
 
 	// Add event listeners
 	webchat.injector.addEventListener("click", (e) => {
-
-		// When the user clicks on the form button
-		if (hasClass(e.composedPath(), "submitButton_")) {
-			getForm().addEventListener("submit", onSubmit);
-			return;	  
-		}
+	  if (hasClass(e.composedPath(), "submitButton_")) {
+	      if (withWelcomeScreen) {
+		startProcess();
+	      }
+	      return;
+    	  }	
   
 	  // When the user clicks on the "Start new chat"
 	  if (hasClass(e.composedPath(), startButtonClass) && e.isTrusted) {
