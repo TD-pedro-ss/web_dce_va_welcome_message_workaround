@@ -1,6 +1,9 @@
 # Web Messenger welcome message automatic trigger
 This code allows Talkdesk Web Messenger to initiate a chat conversation once the contact opens the chat bubble or submits the welcome form.
 
+## ⚠️ Important note
+This is a custom code that was created based on the Talkdesk Digital Engagement Chat Widget SDK capabilities (https://support.talkdesk.com/hc/en-us/articles/4418031478299-Talkdesk-Digital-Engagement-Chat-Widget-for-Administrators). Feel free to use or change it, we will not provide support this custom snippet.
+
 ## How to use it?
 
 ### Embedded the files
